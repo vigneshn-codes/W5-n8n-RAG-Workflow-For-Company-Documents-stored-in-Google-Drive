@@ -1,0 +1,87 @@
+# LinkedIn Posts — RAG Workflow for Company Documents
+
+---
+
+## POST 1 — Technical Engineering Audience
+
+---
+
+🔧 Built a production-ready RAG pipeline on n8n — here's the full architecture breakdown.
+
+I recently shipped a self-hosted Retrieval-Augmented Generation workflow that auto-indexes company documents from Google Drive and serves answers through a LangChain AI Agent. Here's how it works under the hood:
+
+**📥 Ingestion Pipeline**
+→ Dual Google Drive triggers (`fileCreated` + `fileUpdated`) poll a watched folder every minute
+→ New/updated files are downloaded as binary and passed to a **Default Data Loader**
+→ A **Recursive Character Text Splitter** (100-token overlap) ensures context continuity across chunk boundaries
+→ **OpenAI Embeddings** (`text-embedding-ada-002`) convert chunks to dense vectors
+→ All vectors are upserted into a shared **in-memory vector store** under a consistent key
+
+**💬 Query Pipeline**
+→ A **Chat Trigger** fires on incoming employee questions
+→ A **LangChain AI Agent** (GPT-4o-mini) equipped with a `company_documents_tool` performs semantic retrieval
+→ **Window Buffer Memory** maintains multi-turn conversation state across the session
+→ Retrieved context is synthesized and returned through an **Edit Fields** formatter node
+
+**Technical decisions worth noting:**
+- Shared `vector_store_key` between ingestion and retrieval stores ensures zero coordination overhead
+- Separate LLM slots on both the Agent and Vector Store Tool nodes allow independent model swapping
+- The fallback response ("I cannot find the answer...") is baked into the system prompt — no hallucination drift
+- The in-memory store is intentionally simple for demo purposes; Pinecone/Qdrant drop-ins are straightforward
+
+**What I'd change for production:**
+- Replace polling triggers with Drive webhooks for real-time ingestion
+- Add upsert logic with file hash checks to prevent duplicate embeddings on re-uploads
+- Swap the Simple Vector Store for Pinecone with namespace-based tenant isolation
+
+The entire workflow is ~18 nodes, zero custom code, and runs cleanly on a self-hosted n8n instance.
+
+If you're building enterprise RAG on n8n, happy to share the JSON. Drop a comment or DM.
+
+#n8n #RAG #LangChain #OpenAI #AIEngineering #VectorSearch #WorkflowAutomation #LLMOps #SelfHosted
+
+---
+
+## POST 2 — General / Non-Technical Audience
+
+---
+
+🗂️ What if every employee could instantly find answers hidden in your company's documents?
+
+Most teams have a growing pile of internal documents — HR policies, onboarding guides, product manuals, process documentation. The problem? Finding the right answer inside them takes forever.
+
+I built an AI-powered assistant that solves this — and it's fully automated.
+
+Here's how it works in plain English:
+
+**Step 1: Watch your Google Drive**
+The system keeps an eye on a specific Google Drive folder. Whenever a new document is added or an existing one is updated, it automatically picks it up — no manual steps needed.
+
+**Step 2: Learn from the documents**
+The document is read, broken into small pieces, and turned into a format that AI can search through intelligently. Think of it like building a smart index that understands meaning, not just keywords.
+
+**Step 3: Answer employee questions**
+Employees open a chat window and ask questions in plain language:
+- *"What's our work-from-home policy?"*
+- *"How do I submit an expense report?"*
+- *"What are the steps for onboarding a new vendor?"*
+
+The AI searches the documents, finds the most relevant sections, and gives a clear, concise answer — instantly.
+
+If the answer isn't in the documents, it says so honestly. No guessing.
+
+**Why this matters:**
+✅ Saves hours of searching through folders
+✅ Works 24/7, no human support needed
+✅ Answers stay accurate because they're grounded in your actual documents
+✅ Documents stay in your own Google Drive — nothing leaves your environment
+
+No complicated software. No IT overhaul. Just smarter access to knowledge your company already has.
+
+This is what automation looks like when it actually solves a real problem.
+
+Would your team benefit from something like this? Let me know in the comments 👇
+
+#AI #Automation #ProductivityTools #KnowledgeManagement #GoogleDrive #ChatGPT #BusinessTools #HRTech #DigitalTransformation #n8n
+
+---

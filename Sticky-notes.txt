@@ -1,0 +1,107 @@
+# 🗒️ Sticky Notes for RAG Workflow
+
+Below are 5 sticky notes to add to your n8n canvas. Each note is ready to paste into a **Sticky Note** node.
+
+---
+
+## Sticky Note 1 — TRIGGER
+**Canvas Position:** Near Google Drive trigger nodes
+**Color:** Yellow
+
+```
+## 🔔 TRIGGER — Google Drive Watchers
+
+Two polling triggers (every 1 min) monitor:
+- `fileCreated` → new documents uploaded
+- `fileUpdated` → existing documents modified
+
+Both feed into the same Download node.
+Folder ID: configured per environment.
+
+⚠️ Switch to webhook trigger for sub-minute latency.
+```
+
+---
+
+## Sticky Note 2 — INGESTION PIPELINE
+**Canvas Position:** Above the Download → Vector Store insert chain
+**Color:** Blue
+
+```
+## 📥 INGESTION — Parse, Chunk & Embed
+
+Flow:
+1. Download binary file from Google Drive
+2. Default Data Loader parses binary → text
+3. Recursive Character Text Splitter:
+   - chunkOverlap: 100 tokens
+4. OpenAI Embeddings → vector representation
+5. Insert into Simple Vector Store (key: vector_store_key)
+
+⚠️ In-memory store resets on restart.
+Upgrade to Pinecone / Qdrant for persistence.
+```
+
+---
+
+## Sticky Note 3 — AI AGENT CORE
+**Canvas Position:** Above the AI Agent node
+**Color:** Green
+
+```
+## 🤖 AGENT — LangChain AI Agent (GPT-4o-mini)
+
+Agent is equipped with:
+- Tool: company_documents_tool (vector store retrieval)
+- Memory: Window Buffer (multi-turn conversation)
+- LLM: OpenAI GPT-4o-mini
+
+System prompt scope:
+- Answer only from company documents
+- Fallback: "I cannot find the answer in the available resources."
+
+Entry: Chat Trigger (webhook)
+Exit: Edit Fields → returns $json.output
+```
+
+---
+
+## Sticky Note 4 — VECTOR STORE RETRIEVAL
+**Canvas Position:** Near Vector Store Tool and Simple Vector Store nodes
+**Color:** Orange
+
+```
+## 🔍 RETRIEVAL — Semantic Search via Vector Store Tool
+
+Tool Name: company_documents_tool
+Vector Store: Simple Vector Store (key: vector_store_key)
+Embedding Model: OpenAI text-embedding-ada-002
+
+Both insert (ingestion) and retrieve (query) stores
+share the same memory key to ensure data consistency.
+
+Query model (separate LLM slot on Vector Store Tool):
+GPT-4o-mini used to format retrieved context.
+```
+
+---
+
+## Sticky Note 5 — OUTPUT & SETUP NOTES
+**Canvas Position:** Far left of canvas (setup reference)
+**Color:** Purple / Gray
+
+```
+## ⚙️ SETUP CHECKLIST
+
+✅ Google Cloud: Enable Drive API + OAuth2 client
+✅ OpenAI: API key configured in credentials
+✅ n8n credentials: GoogleDriveOAuth2, OpenAiApi
+✅ Both Drive triggers → set correct Folder ID
+✅ Both Vector Store nodes → same vector_store_key
+✅ Activate workflow after credential setup
+
+📦 Production upgrades:
+- Replace Simple Vector Store → Pinecone / Qdrant
+- Add deduplication logic before insert
+- Change poll interval to reduce API usage
+```
